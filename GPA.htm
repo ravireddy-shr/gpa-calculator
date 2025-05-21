@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .container {
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        input, select {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .info {
+            background-color: #e8f4f8;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GPA Calculator</h1>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('semesterGPA')">Semester GPA</div>
+        <div class="tab" onclick="showTab('cgpa')">CGPA</div>
+    </div>
+
+    <div id="semesterGPA" class="tab-content active">
+        <div class="container">
+            <h2>Calculate Semester GPA</h2>
+
+            <div class="info">
+                <strong>Grade Points:</strong> S = 10, A = 9, B = 8, C = 7, D = 6, F = 0
+            </div>
+
+            <div>
+                <label for="numCourses">Number of Courses:</label>
+                <input type="number" id="numCourses" min="1" max="12" value="4" onchange="generateCourseTable()">
+            </div>
+
+            <table id="courseTable">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Credits</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="courseTableBody">
+                    <!-- Course rows will be generated here -->
+                </tbody>
+            </table>
+
+            <button onclick="calculateGPA()">Calculate GPA</button>
+
+            <div id="gpaResult" class="result"></div>
+        </div>
+    </div>
+
+    <div id="cgpa" class="tab-content">
+        <div class="container">
+            <h2>Calculate Cumulative GPA (CGPA)</h2>
+
+            <div>
+                <label for="numSemesters">Number of Semesters:</label>
+                <input type="number" id="numSemesters" min="1" max="12" value="2" onchange="generateSemesterTable()">
+            </div>
+
+            <table id="semesterTable">
+                <thead>
+                    <tr>
+                        <th>Semester</th>
+                        <th>GPA</th>
+                        <th>Credits</th>
+                    </tr>
+                </thead>
+                <tbody id="semesterTableBody">
+                    <!-- Semester rows will be generated here -->
+                </tbody>
+            </table>
+
+            <button onclick="calculateCGPA()">Calculate CGPA</button>
+
+            <div id="cgpaResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Grade point values
+        const gradePoints = {
+            'S': 10.0,
+            'A': 9.0,
+            'B': 8.0,
+            'C': 7.0,
+            'D': 6.0,
+            'F': 0.0
+        };
+
+        // Show tab content
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+
+            // Add active class to clicked tab
+            const tabs = document.querySelectorAll('.tab');
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].textContent.includes(tabId === 'semesterGPA' ? 'Semester GPA' : 'CGPA')) {
+                    tabs[i].classList.add('active');
+                    break;
+                }
+            }
+        }
+
+        // Generate course table rows
+        function generateCourseTable() {
+            const numCourses = document.getElementById('numCourses').value;
+            const tableBody = document.getElementById('courseTableBody');
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            // Generate new rows
+            for (let i = 1; i <= numCourses; i++) {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>Course ${i}</td>
+                    <td><input type="number" id="credit_${i}" min="1" max="5" value="3"></td>
+                    <td>
+                        <select id="grade_${i}">
+                            <option value="S">S</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="F">F</option>
+                        </select>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Generate semester table rows
+        function generateSemesterTable() {
+            const numSemesters = document.getElementById('numSemesters').value;
+            const tableBody = document.getElementById('semesterTableBody');
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            // Generate new rows
+            for (let i = 1; i <= numSemesters; i++) {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>Semester ${i}</td>
+                    <td><input type="number" id="semester_gpa_${i}" min="0" max="10" step="0.01" value="8.0"></td>
+                    <td><input type="number" id="semester_credit_${i}" min="1" max="30" value="20"></td>
+                `;
+
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Calculate GPA
+        function calculateGPA() {
+            const numCourses = document.getElementById('numCourses').value;
+            let totalCreditPoints = 0;
+            let totalCredits = 0;
+
+            for (let i = 1; i <= numCourses; i++) {
+                const grade = document.getElementById(`grade_${i}`).value;
+                const credit = parseFloat(document.getElementById(`credit_${i}`).value);
+
+                totalCreditPoints += gradePoints[grade] * credit;
+                totalCredits += credit;
+            }
+
+            if (totalCredits > 0) {
+                const gpa = totalCreditPoints / totalCredits;
+                document.getElementById('gpaResult').textContent = `Your GPA: ${gpa.toFixed(2)}`;
+            } else {
+                document.getElementById('gpaResult').textContent = 'Error: Total credits must be greater than 0';
+            }
+        }
+
+        // Calculate CGPA
+        function calculateCGPA() {
+            const numSemesters = document.getElementById('numSemesters').value;
+            let totalCreditPoints = 0;
+            let totalCredits = 0;
+
+            for (let i = 1; i <= numSemesters; i++) {
+                const semesterGPA = parseFloat(document.getElementById(`semester_gpa_${i}`).value);
+                const semesterCredit = parseFloat(document.getElementById(`semester_credit_${i}`).value);
+
+                totalCreditPoints += semesterGPA * semesterCredit;
+                totalCredits += semesterCredit;
+            }
+
+            if (totalCredits > 0) {
+                const cgpa = totalCreditPoints / totalCredits;
+                document.getElementById('cgpaResult').textContent = `Your CGPA: ${cgpa.toFixed(2)}`;
+            } else {
+                document.getElementById('cgpaResult').textContent = 'Error: Total credits must be greater than 0';
+            }
+        }
+
+        // Initialize the page
+        window.onload = function() {
+            generateCourseTable();
+            generateSemesterTable();
+        };
+    </script>
+</body>
+</html>
